@@ -1,0 +1,44 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/Result.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/System/ScoreUI.tscn" type="PackedScene" id=2]
+
+[sub_resource type="InputEventAction" id=1]
+action = "title_start_action"
+
+[sub_resource type="ShortCut" id=2]
+shortcut = SubResource( 1 )
+
+[node name="Result" type="Node2D"]
+script = ExtResource( 1 )
+titleScene = "res://Action RPG Resources/System/Title.tscn"
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_right = 360.0
+margin_bottom = 208.0
+color = Color( 0.901961, 0.443137, 0, 1 )
+
+[node name="Label" type="Label" parent="."]
+margin_top = 37.0
+margin_right = 328.0
+margin_bottom = 181.0
+text = "Final Score"
+align = 1
+
+[node name="Button" type="Button" parent="."]
+margin_left = 104.0
+margin_top = 152.0
+margin_right = 224.0
+margin_bottom = 172.0
+shortcut = SubResource( 2 )
+text = "Back Title!"
+
+[node name="Score" parent="." instance=ExtResource( 2 )]
+margin_left = 136.0
+margin_top = 80.0
+margin_right = 216.0
+margin_bottom = 94.0
+
+[connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]
+
+[editable path="Score"]

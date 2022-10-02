@@ -1,0 +1,12 @@
+[gd_resource type="Theme" load_steps=3 format=2]
+
+[sub_resource type="DynamicFontData" id=1]
+font_path = "res://Action RPG Resources/asset/Godot-Fontpack/fonts/xolonium/xolonium-fonts-4.1/ttf/Xolonium-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=2]
+outline_size = 1
+outline_color = Color( 0, 0, 0, 1 )
+font_data = SubResource( 1 )
+
+[resource]
+default_font = SubResource( 2 )

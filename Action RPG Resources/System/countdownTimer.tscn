@@ -1,0 +1,147 @@
+[gd_scene load_steps=29 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/ScoreIndex.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/System/scoreNum-Sheet.png" type="Texture" id=2]
+[ext_resource path="res://Action RPG Resources/System/countdownTimer.gd" type="Script" id=3]
+[ext_resource path="res://Action RPG Resources/System/string_finish.png" type="Texture" id=4]
+[ext_resource path="res://Action RPG Resources/Effects/temp.png" type="Texture" id=5]
+[ext_resource path="res://Action RPG Resources/SE/finishSE.wav" type="AudioStream" id=6]
+
+[sub_resource type="AtlasTexture" id=24]
+atlas = ExtResource( 2 )
+region = Rect2( 0, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=25]
+atlas = ExtResource( 2 )
+region = Rect2( 48, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=26]
+atlas = ExtResource( 2 )
+region = Rect2( 96, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=27]
+atlas = ExtResource( 2 )
+region = Rect2( 144, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=28]
+atlas = ExtResource( 2 )
+region = Rect2( 192, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=29]
+atlas = ExtResource( 2 )
+region = Rect2( 240, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=30]
+atlas = ExtResource( 2 )
+region = Rect2( 288, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=31]
+atlas = ExtResource( 2 )
+region = Rect2( 336, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=32]
+atlas = ExtResource( 2 )
+region = Rect2( 384, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=33]
+atlas = ExtResource( 2 )
+region = Rect2( 432, 0, 48, 48 )
+
+[sub_resource type="SpriteFrames" id=45]
+animations = [ {
+"frames": [ SubResource( 24 ), SubResource( 25 ), SubResource( 26 ), SubResource( 27 ), SubResource( 28 ), SubResource( 29 ), SubResource( 30 ), SubResource( 31 ), SubResource( 32 ), SubResource( 33 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="AtlasTexture" id=35]
+atlas = ExtResource( 2 )
+region = Rect2( 0, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=36]
+atlas = ExtResource( 2 )
+region = Rect2( 48, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=37]
+atlas = ExtResource( 2 )
+region = Rect2( 96, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=38]
+atlas = ExtResource( 2 )
+region = Rect2( 144, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=39]
+atlas = ExtResource( 2 )
+region = Rect2( 192, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=40]
+atlas = ExtResource( 2 )
+region = Rect2( 240, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=41]
+atlas = ExtResource( 2 )
+region = Rect2( 288, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=42]
+atlas = ExtResource( 2 )
+region = Rect2( 336, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=43]
+atlas = ExtResource( 2 )
+region = Rect2( 384, 0, 48, 48 )
+
+[sub_resource type="AtlasTexture" id=44]
+atlas = ExtResource( 2 )
+region = Rect2( 432, 0, 48, 48 )
+
+[sub_resource type="SpriteFrames" id=46]
+animations = [ {
+"frames": [ SubResource( 35 ), SubResource( 36 ), SubResource( 37 ), SubResource( 38 ), SubResource( 39 ), SubResource( 40 ), SubResource( 41 ), SubResource( 42 ), SubResource( 43 ), SubResource( 44 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[node name="countdownTimer" type="Label"]
+margin_top = 64.0
+margin_right = 40.0
+margin_bottom = 78.0
+script = ExtResource( 3 )
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.1
+autostart = true
+
+[node name="ten" type="AnimatedSprite" parent="."]
+position = Vector2( 47, 0 )
+scale = Vector2( 0.5, 0.5 )
+frames = SubResource( 45 )
+script = ExtResource( 1 )
+
+[node name="one" type="AnimatedSprite" parent="."]
+position = Vector2( 63, 0 )
+scale = Vector2( 0.5, 0.5 )
+frames = SubResource( 46 )
+script = ExtResource( 1 )
+
+[node name="finish" type="Sprite" parent="."]
+position = Vector2( 48, 64 )
+scale = Vector2( 0.8, 0.8 )
+z_index = 10
+texture = ExtResource( 4 )
+
+[node name="lowLight" type="Sprite" parent="."]
+unique_name_in_owner = true
+modulate = Color( 0.352941, 0.352941, 0.352941, 0.658824 )
+position = Vector2( 1, 0 )
+texture = ExtResource( 5 )
+
+[node name="finish_process" type="Timer" parent="."]
+one_shot = true
+
+[node name="finishSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 6 )
+
+[connection signal="timeout" from="Timer" to="." method="_on_Timer_timeout"]
+[connection signal="timeout" from="finish_process" to="." method="_on_finish_process_timeout"]

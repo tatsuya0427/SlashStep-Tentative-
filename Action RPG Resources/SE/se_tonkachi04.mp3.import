@@ -1,0 +1,15 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+path="res://.import/se_tonkachi04.mp3-a09c0f484e37f514022236c06a142fe8.mp3str"
+
+[deps]
+
+source_file="res://Action RPG Resources/SE/se_tonkachi04.mp3"
+dest_files=[ "res://.import/se_tonkachi04.mp3-a09c0f484e37f514022236c06a142fe8.mp3str" ]
+
+[params]
+
+loop=true
+loop_offset=0

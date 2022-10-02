@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Action RPG Resources/overLap/TargetDetectionZone.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/overLap/TargetDetectionTemp.gd" type="Script" id=2]
+
+[node name="TargetDetectionTemp" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="TargetDetectionZone" type="Area2D" parent="."]
+script = ExtResource( 1 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TargetDetectionZone"]
+
+[connection signal="area_entered" from="TargetDetectionZone" to="TargetDetectionZone" method="_on_TargetDetectionZone_area_entered"]
+[connection signal="area_exited" from="TargetDetectionZone" to="TargetDetectionZone" method="_on_TargetDetectionZone_area_exited"]

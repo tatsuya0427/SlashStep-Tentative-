@@ -1,0 +1,15 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+path="res://.import/normalAttackSE.mp3-ced6d7e615e50c62515caf9c5f70090c.mp3str"
+
+[deps]
+
+source_file="res://Action RPG Resources/SE/normalAttackSE.mp3"
+dest_files=[ "res://.import/normalAttackSE.mp3-ced6d7e615e50c62515caf9c5f70090c.mp3str" ]
+
+[params]
+
+loop=true
+loop_offset=0

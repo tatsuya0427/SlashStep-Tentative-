@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Action RPG Resources/Enemies/Tear.png" type="Texture" id=1]
+[ext_resource path="res://Action RPG Resources/Effects/FeadAnimation.gd" type="Script" id=2]
+
+[node name="FadeAnimation" type="Sprite"]
+modulate = Color( 0.854902, 0.0352941, 0.0352941, 0.372549 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 1 )
+offset = Vector2( 0, -30 )
+hframes = 93
+script = ExtResource( 2 )
+
+[node name="Tween" type="Tween" parent="."]
+
+[connection signal="tween_completed" from="Tween" to="." method="_on_Tween_tween_completed"]
