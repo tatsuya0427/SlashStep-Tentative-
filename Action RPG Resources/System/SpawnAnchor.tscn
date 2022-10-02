@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/SpawnAnchor.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/Shadows/Shadow-Sheet.png" type="Texture" id=2]
+
+[node name="SpawnAnchor" type="Node2D"]
+script = ExtResource( 1 )
+instantiate_Enemy = "res://Action RPG Resources/Enemies/Tear.tscn"
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 2 )

@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/GameManager.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/System/Wave1.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Action RPG Resources/BGM/bgm.ogg" type="AudioStream" id=3]
+[ext_resource path="res://Action RPG Resources/System/Wave2.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Action RPG Resources/System/CharaList.tscn" type="PackedScene" id=5]
+
+[node name="GameManager" type="Node2D"]
+script = ExtResource( 1 )
+load_waveList = [ ExtResource( 2 ), ExtResource( 4 ) ]
+gameoverScene = "res://Action RPG Resources/System/GameOver.tscn"
+resultScene = "res://Action RPG Resources/System/Result.tscn"
+
+[node name="GhostList" type="Node2D" parent="."]
+
+[node name="CharaList" parent="." instance=ExtResource( 5 )]
+unique_name_in_owner = true
+sort_enabled = false
+
+[node name="timeout_effect" type="Timer" parent="."]
+
+[node name="BGM" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 3 )
+volume_db = -10.0
+
+[connection signal="timeout" from="timeout_effect" to="." method="_on_timeout_effect_timeout"]
+
+[editable path="CharaList"]

@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/Title.gd" type="Script" id=1]
+
+[sub_resource type="InputEventAction" id=1]
+action = "title_start_action"
+
+[sub_resource type="ShortCut" id=2]
+shortcut = SubResource( 1 )
+
+[node name="Title" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+margin_right = 328.0
+margin_bottom = 200.0
+color = Color( 0.117647, 0.588235, 0.678431, 1 )
+
+[node name="Button" type="Button" parent="CanvasLayer"]
+margin_left = 104.0
+margin_top = 152.0
+margin_right = 224.0
+margin_bottom = 172.0
+shortcut = SubResource( 2 )
+text = "START!!"
+
+[node name="Label" type="Label" parent="CanvasLayer"]
+margin_right = 328.0
+margin_bottom = 144.0
+text = "Slash Step"
+align = 1
+valign = 1
+
+[connection signal="pressed" from="CanvasLayer/Button" to="." method="_on_Button_pressed"]
