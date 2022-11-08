@@ -7,6 +7,7 @@ export(String, FILE, ".*tscn") var instantiate_Enemy
 
 func _ready():
 	$Sprite.visible = false
+	pass
 
 #var instantiate_Enemy = preload("res://Action RPG Resources/Enemies/Tear.tscn")
 
@@ -25,7 +26,11 @@ func enemy_Generate(gameManager, waveManager):
 	#	get_node("%CharaList").add_child(enemy)
 		
 		
-		enemy.global_position = self.global_position
+		enemy.set_global_position(self.position + get_parent().get_parent().global_position - gameManager.global_position)
+		print("anchor pos : " + str(self.global_position))
+		print("spawn enemy pos : " + str(enemy.position))
+#		enemy.position = (get_parent().global_position)
+
 	#	enemy.global_position = global_position
 		
 		enemy.set_WaveEnemy()

@@ -5,7 +5,6 @@
 
 [node name="SpawnAnchor" type="Node2D"]
 script = ExtResource( 1 )
-instantiate_Enemy = "res://Action RPG Resources/Enemies/Tear.tscn"
 
 [node name="Sprite" type="Sprite" parent="."]
 texture = ExtResource( 2 )

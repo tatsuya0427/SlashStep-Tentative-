@@ -4,39 +4,33 @@
 [ext_resource path="res://Action RPG Resources/System/SpawnAnchor.tscn" type="PackedScene" id=2]
 
 [node name="WaveTemp" type="Node2D"]
+position = Vector2( 0, 8 )
 script = ExtResource( 1 )
 
 [node name="SpawnAnchor" parent="." instance=ExtResource( 2 )]
-position = Vector2( 128, 0 )
+position = Vector2( 128, 48 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor2" parent="." instance=ExtResource( 2 )]
-position = Vector2( -128, 0 )
-instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
-
-[node name="SpawnAnchor3" parent="." instance=ExtResource( 2 )]
-position = Vector2( -128, -128 )
+position = Vector2( -128, 48 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor4" parent="." instance=ExtResource( 2 )]
-position = Vector2( 0, -128 )
+position = Vector2( -64, 8 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor5" parent="." instance=ExtResource( 2 )]
-position = Vector2( 0, 128 )
+position = Vector2( 64, 88 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor6" parent="." instance=ExtResource( 2 )]
-position = Vector2( -128, 120 )
+position = Vector2( -64, 88 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor7" parent="." instance=ExtResource( 2 )]
-position = Vector2( 128, -128 )
+position = Vector2( 64, 8 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
 
 [node name="SpawnAnchor9" parent="." instance=ExtResource( 2 )]
-instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"
-
-[node name="SpawnAnchor8" parent="." instance=ExtResource( 2 )]
-position = Vector2( 128, 128 )
+position = Vector2( 0, 48 )
 instantiate_Enemy = "res://Action RPG Resources/Enemies/State_test_Tear.tscn"

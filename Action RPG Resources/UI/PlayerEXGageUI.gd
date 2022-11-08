@@ -79,11 +79,16 @@ func setting(statsClass, max_ex, ex):
 	statsClass.connect("ex_changed", self, "set_ex")
 	statsClass.connect("max_ex_changed", self, "set_max_ex")
 	
-	self.visible = false
+	set_visible(true)
 	
 #	beforeConnect_statsClass = statsClass
 #	print(healthBar_under.max_value)
 #	print(healthBar_under.value)
+	pass
+
+func set_visible(flag:bool):
+	EXBar_over.visible = flag
+	EXBar_under.visible = flag
 	pass
 
 #func disconnect_healthUI():

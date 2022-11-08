@@ -5,5 +5,12 @@
 
 [node name="EnemyStats" instance=ExtResource( 1 )]
 script = ExtResource( 2 )
-enemy_healthUI = ""
+_enemy_healthUI = ""
+_max_health = 1
+_power = 1
+_hurt_float_pow = 0
+_float_pow = 0
+_jump_height = 0.0
+_jump_time_to_peak = 0.0
+_jump_time_to_descent = 0.0
 myType = 1

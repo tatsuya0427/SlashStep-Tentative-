@@ -1,6 +1,9 @@
 extends KinematicBody2D
 
-const EnemyDeathEffect = preload("res://Action RPG Resources/Effects/EnemyDeathEffect.tscn")
+const EnemyDeathEffect = preload("res://Action RPG Resources/Effects/EffectPlayer.tscn")
+
+
+
 
 #------------------------------で囲んだところ以外はインスタンス化できそう。動画見終わったらそれをやってオリジナルのてきに適用しよう
 
@@ -43,6 +46,7 @@ onready var duel1State = TearDuel1State.new()
 onready var duelStayState = TearDuelStayState.new()
 onready var damageState = TearDamageState.new()
 onready var deathState = TearDeathState.new()
+onready var ex_stay = TearEX_AttackStayState.new()
 
 #このキャラクターが生きているかどうか
 onready var live = true
@@ -55,17 +59,18 @@ onready var live = true
 var velocity = Vector2.ZERO
 #このキャラクターが吹っ飛ぶ力
 var knockback = Vector2.ZERO
-#このキャラクターの向いている向き
+#このキャラクターの向いている値
 var direction = Vector2.ZERO
+var is_look_right : bool = false
 
 
 #-----------------追跡関係---------------------
 #onready var playerDetrctionZone = $TargetDetectionTemp
-onready var playerDetrctionZone = $Image/PlayerDetectionZone
+onready var playerDetrctionZone = $jump_move/Image/PlayerDetectionZone
 #----------------------------------------------
 
 #--------------アニメーション関係----------------
-onready var image = $Image
+onready var image = $jump_move/Image
 onready var anim = $AnimationPlayer
 #現在再生しているアニメーション名を格納しておく変数
 var  now_play_anim = ""
@@ -74,10 +79,10 @@ var  now_play_anim = ""
 onready var animationTree = $AnimationTree
 onready var animationState = animationTree.get("parameters/playback")
 #----------------------------------------------
-onready var hurtbox = $Image/HurtBox
-onready var hurtboxCollision = $Image/HurtBox/CollisionShape2D
-onready var softCollision = $Image/SoftCollision
-onready var softCollision_col = $Image/SoftCollision/CollisionShape2D
+onready var hurtbox = $jump_move/Image/HurtBox
+onready var hurtboxCollision = $jump_move/Image/HurtBox/CollisionShape2D
+onready var softCollision = $jump_move/Image/SoftCollision
+onready var softCollision_col = $jump_move/Image/SoftCollision/CollisionShape2D
 
 #死亡時、少しディレイをかけてから志望エフェクトを生成する
 onready var death_timer = $death_direction_timer
@@ -94,22 +99,22 @@ var player = null
 
 #CharaListにて、playerにターゲットされている敵はtrueにし、死亡時に別ターゲットを指定する信号を送信する
 onready var targeting:bool = false setget set_targeting
-onready var targetImage = $Image/Target
+onready var targetImage = $jump_move/Image/Target
 onready var pop = $Label
 
 #-------------------------------------------------------
 
 #------------------------攻撃関連------------------------
-#攻撃時のふっとばし力
-export var knockback_pow = 30
-var knockback_vector
+#攻撃時のふっとばし力(statsに移行)
+#export var knockback_pow = 30
+#var knockback_vector = Vector2.LEFT
 #STAYNEAR状態になった際に、ランダムな秒数後、Playerが近いなら攻撃を行い、遠い場合にはIdle状態になる
 onready var nextActionTimer = $NextActionTimer
 
 #knockbackやDamageの値はこのクラスから変更する
-onready var hitBox = $Image/HitBoxPivot/HitBox
+onready var hitBox = $jump_move/Image/HitBoxPivot/HitBox
 #攻撃の当たり判定の処理
-onready var hitBoxCol = $Image/HitBoxPivot/HitBox/CollisionShape2D
+onready var hitBoxCol = $jump_move/Image/HitBoxPivot/HitBox/CollisionShape2D
 #attackTimerが設定された際にはtrueになり、追加でattackTimerが設定されないようにする
 #var will_attack = false
 
@@ -129,16 +134,16 @@ var ghost_cnt = 0
 #onready var image = $Image
 
 #攻撃時に赤く光る機能
-onready var fadeAnimation = $Image/FadeAnimation
+onready var fadeAnimation = $jump_move/Image/FadeAnimation
 
 #-----------デュアルシステム関係----------------
 #tear自身の当たり判定
 onready var body_col = $CollisionShape2D
 #デュアルシステムの攻撃当たり判定
-onready var duel_hitBox = $Image/HitBoxPivot/HitBox
-onready var duel_hitBox_Col = $Image/HitBoxPivot/HitBox/CollisionShape2D
+#onready var duel_hitBox = $jump_move/duel_HitBox
+#onready var duel_hitBox_Col = $jump_move/duel_HitBox/CollisionShape2D
 #デュアルシステムを起動できる攻撃時に頭上に表示する画像
-onready var attentionImage = $Image/AttentionImage
+onready var attentionImage = $jump_move/Image/AttentionImage
 #デュアルシステムを起動できる状態にある場合にはtrueに
 onready var can_duelFlag = false
 #現在、デュアルシステムの対象のキャラになっているかどうか。対象ならばtrue
@@ -160,6 +165,11 @@ export var enemy_Score = 100
 
 #-------------------死亡時アニメーション関係---------------
 #-------------------------------------------------------
+
+#-------------------ジャンプ、吹っ飛び関係---------------
+onready var _jump_process = $jump_move
+#-------------------------------------------------------
+
 #コンストラクタ
 func init():
 	pass
@@ -206,8 +216,8 @@ func _ready():
 	
 	softCollision_col.set_disabled(false)
 	
-	attackList.push_back(AttackPattern.new(attackState, null, false))
-	attackList.push_back(AttackPattern.new(attackState, duel1State, true))
+	attackList.push_back(AttackPattern.new(attackState, null, false, "NailAttackEffect"))
+	attackList.push_back(AttackPattern.new(attackState, duel1State, true, "NailAttackEffect"))
 
 func _physics_process(delta):
 	
@@ -244,13 +254,19 @@ func play_anim(play_name:String):
 func set_targeting(value:bool):
 	targeting = value
 	targetImage.visible = value
+	#targetがtrueの時にもしcan_duelFlag = trueならattentionImageを可視化する
+	if can_duelFlag and value:
+		attentionImage.visible = true
+	else:
+		attentionImage.visible = false
 	#targetingされた敵のHPをUIとして設定する
 	stats.set_healthUI(value)
 
 #デュアルシステムが起動可能か否かを切り替える関数
 func switch_DuelFlag(flag:bool):
 	if flag:
-		attentionImage.visible = true
+		if targeting:
+			attentionImage.visible = true
 		can_duelFlag = true
 	else:
 		attentionImage.visible = false
@@ -327,6 +343,14 @@ func duel_rollAttack_finish():
 	stateMatchine.ChangeState(idleState)
 	pass
 
+#playerがexAttackをした時に実行する関数
+func ex_attack_start():
+	stateMatchine.ChangeState(ex_stay)
+	pass
+	
+func ex_attack_end():
+	stateMatchine.RevertToPreviousState()
+
 #次の攻撃をランダムに選択する
 func chose_attack():
 	#ここでランダムに攻撃パターンを選択する
@@ -338,11 +362,13 @@ func chose_attack():
 	will_attack_class = attackList[rng.randi_range(0, attackList.size() - 1)]
 	if will_attack_class.is_duel:
 		switch_DuelFlag(true)
+		nextActionTimer.start(rand_range(1.0, 3.0))
 #		print("--------------------")
 #		print("will_attack_class")
 #		print(will_attack_class)
-#		print("--------------------")
-	nextActionTimer.start(rand_range(0.3, 1.5))
+#		print("--------------------"
+	else:
+		nextActionTimer.start(rand_range(0.3, 1.5))
 
 func create_attackVector():
 #	print(playerDetrctionZone.can_see_player())
@@ -360,7 +386,7 @@ func create_attackVector():
 			correction_knockback_vector.y = distanceData.y / sqrt(pow(distanceData.x, 2) + pow(distanceData.y, 2))
 			
 #		hitbox_node.knockback_vector = correction_knockback_vector
-		knockback_vector = correction_knockback_vector
+		stats.knockback_vector = correction_knockback_vector
 	pass
 
 func _on_NextActionTimer_timeout():
@@ -378,6 +404,7 @@ func _on_NextActionTimer_timeout():
 #		stateMatchine.ChangeState(idleState)
 
 	stateMatchine.ChangeState(will_attack_class.get_normalAttack())
+	stats.target_effect = will_attack_class.effect_pattern
 	pass # Replace with function body.
 
 #---------------------ダメージ＋怯み関係------------------------
@@ -390,15 +417,26 @@ func _on_HurtBox_area_entered(area):
 #	if now_duelFlag
 #		stats.health -= stats.health - 1
 #	else:
-	stats.health -= area.get_owner().stats.power
+	var target = null
+	if area.get_owner().name == "Player":
+		target = area.get_owner()
+	else:
+		target = area.get_owner().get_owner()
+	stats._health -= target.stats._power
 	
 #	knockback = area.knockback_vector * area.knockback_pow
-	knockback = area.get_owner().knockback_vector * area.get_owner().knockback_pow
+	knockback = target.stats.knockback_vector * target.stats.knockback_pow
+	if knockback.x != 0 && knockback.y != 0:
+		knockback.x = knockback.x / 1.4
+		knockback.y = knockback.y / 1.4
 	hitBoxCol.set_deferred("disabled", true)
 	
+	if !(target.stats._float_pow == 0):
+		stats._hurt_float_pow = target.stats._float_pow
+	
 	stateMatchine.ChangeState(damageState)
-
-	area.get_owner().now_hitAttack()
+	
+	target.now_hitAttack()
 
 	if now_duelFlag:
 		var image_pos = image.position
@@ -412,7 +450,8 @@ func _on_HurtBox_area_entered(area):
 		get_parent().duelEnd_frameFreeze(0.05, 1.0)
 #		global_position = duel_image.global_position
 #		get_parent().end_duelSystem()
-	hurtbox.create_hit_effect(global_position)
+
+	hurtbox.create_hit_effect(global_position, target.stats.target_effect)
 	
 #-------------------------------------------------------
 
@@ -443,13 +482,12 @@ func _on_death_direction_timer_timeout():
 	var enemyDeathEffect = EnemyDeathEffect.instance()
 	get_parent().add_child(enemyDeathEffect)
 	enemyDeathEffect.global_position = global_position
+	enemyDeathEffect._play_effect("EnemyDeathEffect")
 
 	#もし、waveEnemyの場合、死亡時にwaveManagerでカウントする信号を送る
 	if(do_connect_wave):
 		GameStats.set_Score(enemy_Score)
-		emit_signal("death")
-	queue_free()
-	pass
+		emit_signal("death", self)
 
 func attack_Animation_Finish():
 	stateMatchine.ChangeState(idleState)
@@ -485,7 +523,8 @@ class TearIdleState extends StateTemp:
 		m_Owner.velocity = m_Owner.velocity.move_toward(Vector2.ZERO, m_Owner.FRICTION * m_Owner.scope_delta)
 #		m_Owner.velocity = m_Owner.velocity.move_toward(Vector2.ZERO, m_Owner.stats.Friction * m_Owner.scope_delta)
 		
-		if(m_Owner.direction.x > 0):
+#		if(m_Owner.direction.x > 0):
+		if(m_Owner.is_look_right):
 			#右向き待機のアニメーション
 			m_Owner.play_anim("IdleRight")
 			pass
@@ -524,10 +563,12 @@ class TearChaseState extends StateTemp:
 			if(m_Owner.direction.x > 0):
 				#右向き待機のアニメーション
 				m_Owner.play_anim("RunRight")
+				m_Owner.is_look_right = true
 				pass
 			else:
 				#左向き待機のアニメーション
 				m_Owner.play_anim("RunLeft")
+				m_Owner.is_look_right = false
 				pass
 			
 			distanceData = sqrt(pow(distanceData.x, 2) + pow(distanceData.y, 2))
@@ -552,6 +593,7 @@ class TearStayNearState extends StateTemp:
 	func _enter(m_Owner):
 #		print("state:stayNear")
 #		print("on nextAction Timer set!")
+		m_Owner.softCollision_col.set_deferred("disabled", true)
 		m_Owner.chose_attack()
 		pass
 	
@@ -561,7 +603,8 @@ class TearStayNearState extends StateTemp:
 		m_Owner.velocity = m_Owner.velocity.move_toward(Vector2.ZERO, m_Owner.FRICTION * m_Owner.scope_delta)
 #		m_Owner.velocity = m_Owner.velocity.move_toward(Vector2.ZERO, m_Owner.stats.Friction * m_Owner.scope_delta)
 		
-		if(m_Owner.direction.x > 0):
+#		if(m_Owner.direction.x > 0):
+		if(m_Owner.is_look_right):
 			#右向き待機のアニメーション
 			#attackの名前で識別して待機アニメーションを切り替える
 			m_Owner.play_anim("IdleRight")
@@ -574,6 +617,7 @@ class TearStayNearState extends StateTemp:
 		pass
 	
 	func _exit(m_Owner):
+		m_Owner.softCollision_col.set_deferred("disabled", false)
 		m_Owner.nextActionTimer.stop()
 		m_Owner.switch_DuelFlag(false)
 		pass
@@ -582,11 +626,13 @@ class TearDamageState extends StateTemp:
 	
 	func _enter(m_Owner):
 #		print("state:damage")
+		m_Owner.softCollision_col.set_deferred("disabled", true)
 		m_Owner.anim.stop(true)
 		pass
 	
 	func _execute(m_Owner):
-		if(m_Owner.direction.x > 0):
+#		if(m_Owner.direction.x > 0):
+		if(m_Owner.is_look_right):
 			#右向き待機のアニメーション
 			m_Owner.play_anim("DamageRight")
 			pass
@@ -597,18 +643,22 @@ class TearDamageState extends StateTemp:
 		pass
 	
 	func _exit(m_Owner):
+		m_Owner.softCollision_col.set_deferred("disabled", false)
 		pass
 
 
 class TearAttackState extends StateTemp:
 	
 	func _enter(m_Owner):
+		m_Owner.softCollision_col.set_deferred("disabled", true)
 #		print("state:attack")
 		m_Owner.fadeAnimation.set_Animation()
 		#各攻撃のノックバックの強さを追加する
 #		m_Owner.hitBox.change_Knockback_Pow(150)
-		m_Owner.knockback_pow = 150
-		if(m_Owner.direction.x > 0):
+		m_Owner.stats.knockback_pow = 150
+		m_Owner.stats._float_pow = 0
+#		if(m_Owner.direction.x > 0):
+		if(m_Owner.is_look_right):
 			#右向きアニメーション
 			m_Owner.play_anim("AttackRight")
 		else:
@@ -622,6 +672,7 @@ class TearAttackState extends StateTemp:
 	func _exit(m_Owner):
 #		m_Owner.hitBoxCol.set_disabled(true)
 		m_Owner.hitBoxCol.set_deferred("disabled", true)
+		m_Owner.softCollision_col.set_deferred("disabled", false)
 		pass	
 
 class TearDuelStayState extends StateTemp:
@@ -657,6 +708,7 @@ class TearDuel1State extends StateTemp:
 	
 	func _enter(m_Owner):
 		print("duel")
+		m_Owner.is_look_right = false
 		
 		m_Owner.duel_end_animation = "duel_rollAttack_End"
 		
@@ -664,10 +716,11 @@ class TearDuel1State extends StateTemp:
 #		m_Owner.anim.play("Duel1")
 		
 		m_Owner.create_attackVector()
-		print(m_Owner.knockback_vector)
+#		print(m_Owner.knockback_vector)
 #		print("duel :" + str(m_Owner.duel_hitBox))
 #		m_Owner.duel_hitBox.change_Knockback_Pow(250)
-		m_Owner.knockback_pow = 250
+		m_Owner.stats.knockback_pow = 250
+		m_Owner.stats._float_pow = 2
 		
 		m_Owner.	play_anim("duel_rollAttack")
 		pass
@@ -687,12 +740,35 @@ class TearDuel1State extends StateTemp:
 		m_Owner.body_col.set_deferred("disabled", false)
 		m_Owner.softCollision_col.set_deferred("disabled", false)
 		pass	
+		
 
+class TearEX_AttackStayState extends StateTemp:
+	
+	func _enter(m_Owner):
+		print("state : ex_Stay")
+#		m_Owner.hurtboxCollision.set_disabled(true)
+#		m_Owner.hurtboxCollision.set_deferred("disabled", true)
+		m_Owner.hurtboxCollision.set_deferred("disabled", false)
+		m_Owner.softCollision_col.set_deferred("disabled", true)
+		m_Owner.velocity = Vector2.ZERO
+		m_Owner.anim.stop(false)
+	
+	func _execute(m_Owner):
+		m_Owner.velocity = Vector2.ZERO
+		pass
+	
+	func _exit(m_Owner):
+#		m_Owner.hurtboxCollision.set_disabled(false)
+#		m_Owner.hurtboxCollision.set_deferred("disabled", false)
+		m_Owner.softCollision_col.set_deferred("disabled", false)
+		m_Owner.play_anim(m_Owner.now_play_anim)
+		pass	
 
 class TearDeathState extends StateTemp:
 	
 	func _enter(m_Owner):
-		if(m_Owner.direction.x > 0):
+#		if(m_Owner.direction.x > 0):
+		if(m_Owner.is_look_right):
 			#右向きアニメーション
 			m_Owner.play_anim("R_death")
 		else:
