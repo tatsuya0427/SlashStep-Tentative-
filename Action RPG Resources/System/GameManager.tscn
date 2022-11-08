@@ -1,16 +1,18 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Action RPG Resources/System/GameManager.gd" type="Script" id=1]
 [ext_resource path="res://Action RPG Resources/System/Wave1.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Action RPG Resources/BGM/bgm.ogg" type="AudioStream" id=3]
 [ext_resource path="res://Action RPG Resources/System/Wave2.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Action RPG Resources/System/CharaList.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Action RPG Resources/System/Wave3.tscn" type="PackedScene" id=6]
 
 [node name="GameManager" type="Node2D"]
 script = ExtResource( 1 )
-load_waveList = [ ExtResource( 2 ), ExtResource( 4 ) ]
-gameoverScene = "res://Action RPG Resources/System/GameOver.tscn"
-resultScene = "res://Action RPG Resources/System/Result.tscn"
+_load_waveList = [ ExtResource( 2 ), ExtResource( 6 ), ExtResource( 4 ) ]
+_gameoverScene = "res://Action RPG Resources/System/GameOver.tscn"
+_resultScene = "res://Action RPG Resources/System/Result.tscn"
+_use_countdown = false
 
 [node name="GhostList" type="Node2D" parent="."]
 

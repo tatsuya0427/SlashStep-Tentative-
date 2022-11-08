@@ -1,0 +1,16 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://Action RPG Resources/System/Spawner.gd" type="Script" id=1]
+[ext_resource path="res://Action RPG Resources/System/Wave1.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Action RPG Resources/System/Wave3.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Action RPG Resources/System/Wave2.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Action RPG Resources/World/sozai/hand.png" type="Texture" id=5]
+[ext_resource path="res://Action RPG Resources/System/Wave0.tscn" type="PackedScene" id=6]
+
+[node name="Spawner" type="Node2D"]
+script = ExtResource( 1 )
+_load_waveList = [ ExtResource( 6 ), ExtResource( 2 ), ExtResource( 4 ), ExtResource( 3 ) ]
+
+[node name="Sprite" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 5 )

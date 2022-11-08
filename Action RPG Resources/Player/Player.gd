@@ -64,6 +64,8 @@ onready var duel_attackSE = $Duel_AttackSE
 #-----------animation関係--------------
 #_ready()と同じタイミングで実行してくれる変数
 onready var animationPlayer = $AnimationPlayer
+#現在再生しているアニメーションの保存
+var now_play_anim = ""
 #$を使うことで、子ノードの機能のパスを入れることができる。
 #onready var animationTree = $AnimationTree
 #onready var animationState = animationTree.get("parameters/playback")
@@ -75,19 +77,18 @@ onready var animationPlayer = $AnimationPlayer
 #---------------------------------------
 
 #--------------攻撃当たり判定関係----------------
-onready var swordHitbox = $HitboxPivot/SwordHitbox
-onready var swordHitbox_collision = $HitboxPivot/SwordHitbox/CollisionShape2D
+onready var sword = $jump_move/HitboxPivot
+onready var swordHitbox_collision = $jump_move/HitboxPivot/SwordHitbox/CollisionShape2D
 
-
-#攻撃時のノックバック方向とその強さを保存
-var knockback_vector
-var knockback_pow
+#攻撃時のノックバック方向とその強さを保存(statsに移行)
+#var knockback_vector
+#var knockback_pow
 #---------------------------------------
 
 #-------------当たり判定関係--------------------------
 onready var k_body = self
-onready var hurtbox = $HurtBox
-onready var hurtboxCollision = $HurtBox/CollisionShape2D
+onready var hurtbox = $jump_move/HurtBox
+onready var hurtboxCollision = $jump_move/HurtBox/CollisionShape2D
 onready var knockback = Vector2.ZERO
 
 onready var invincibleTimer = $InvincibleTime
@@ -95,7 +96,7 @@ onready var invincibleTimer = $InvincibleTime
 
 #-------攻撃時に近い敵に追尾するようにする機能--------
 onready var charaList = get_parent()
-onready var enemyDetrctionZone = $EnemyDetectionZone
+onready var enemyDetrctionZone = $jump_move/EnemyDetectionZone
 var target_enemy = null
 var target_enemy_pos = null
 var attack_vector = Vector2.ZERO
@@ -106,6 +107,9 @@ export var STEP_SPEED = 10
 export var findEnemyStep = 2
 #-----------------------------------------------
 
+#-------------ex_attack関連---------------------
+onready var ex_attack_scene = $ex_position
+#-----------------------------------------------
 
 #-------------duelSysTem関連---------------------
 #現在、duelSystemが起動しているかどうか
@@ -140,7 +144,9 @@ signal duel_damage
 
 #signal collided
 
-onready var icon = $PlayerIcon
+#------------ジャンプ、吹っ飛び処理関係----------------------
+onready var _jump_process = $jump_move
+#-----------------------------------------------
 
 
 # 最終的にY座標に足し引きする値、Z座標（高さ） 
@@ -217,6 +223,7 @@ func _ready():#Sceneが全て実体化(インスタンス化)が終わってか�
 
 #初期化設定
 func setting():
+	stats.setting(self)
 	hurtboxCollision.set_deferred("disabled", false)
 	can_move = true
 	
@@ -224,11 +231,11 @@ func setting():
 	stats.connect("no_health", get_parent().get_gameManager(), "player_dead")
 	stats.connect("no_health", self, "death_Process")
 	
-	$HitboxPivot/SwordHitbox/CollisionShape2D.disabled = true
+	$jump_move/HitboxPivot/SwordHitbox/CollisionShape2D.disabled = true
 #	animationTree.active = true
 	
 	#ノックバック方向の代入
-	knockback_vector = roll_vector
+	stats.knockback_vector = roll_vector
 	
 	stateMatchine.ChangeState(moveState)
 	
@@ -236,6 +243,9 @@ func setting():
 	
 	input_vector = Vector2.RIGHT
 	is_look_right = true
+	
+	#effectの初期設定
+	stats.target_effect = "AttackEffect"
 	pass
 
 func _process(delta):
@@ -275,9 +285,10 @@ func _physics_process(delta):#設定された秒数ごとに一定間隔で呼�
 		if z < 500:
 			z += get_gravity() * delta
 
-		if get_parent().player_duelPos_save.y <= icon.global_position.y:
-			z = 0
-		icon.global_position.y += (z * 0.01)
+		#zjumpをduelmoveで実装していたけど一時中断
+#		if get_parent().player_duelPos_save.y <= icon.global_position.y:
+#			z = 0
+#		icon.global_position.y += (z * 0.01)
 		#-------------------------------------------------------
 	
 	
@@ -289,52 +300,11 @@ func _physics_process(delta):#設定された秒数ごとに一定間隔で呼�
 	#-------------------------------------
 	
 	stateMatchine.Update()
-	
-func move_state(delta):
-#	input_vector = Vector2.ZERO
-#	input_vector.x = (Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"))
-#	if input_vector.x != 0:
-#		initial_attack_vector = input_vector
-#	input_vector.y = (Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up"))
-#	input_vector = input_vector.normalized()
-#
-#	if input_vector != Vector2.ZERO:
-#		roll_vector = input_vector
-#		#attack_vector = input_vector
-#		swordHitbox.knockback_vector = input_vector
-#		animationTree.set("parameters/Idle/blend_position", input_vector)
-#		animationTree.set("parameters/Run/blend_position", input_vector)
-#
-#		animationTree.set("parameters/Attack1/blend_position", input_vector)
-#		animationTree.set("parameters/Attack2/blend_position", input_vector)
-#		animationTree.set("parameters/Attack3/blend_position", input_vector)
-#
-#		animationTree.set("parameters/Roll/blend_position", input_vector)
-#		animationState.travel("Run")
-#
-#		velocity = velocity.move_toward(input_vector * MAX_SPEED, ACCELERATION * delta)
-##		print(stats.Acceleration)
-##		velocity = velocity.move_toward(input_vector * MAX_SPEED, stats.Acceleration * delta)
-#
-#	else:
-##		animationPlayer.play("Idle Right")		
-#		#animationTree.set("parameters/Idle/blend_position", input_vector)
-#		animationState.travel("Idle")
-#		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
-#
-#	move()
-	
-#	if Input.is_action_just_pressed("attack"):
-#		state = player_state.ATTACK1
-#	if Input.is_action_just_pressed("roll"):
-#		state = player_state.ROLL
-#
-#	if Input.is_action_just_pressed("jump"):
-#		#state = JUMP
-#		pass
-#	if Input.is_action_just_pressed("action"):
-##		state = player_state.DUEL
-#		camera.current = false
+
+
+func play_anim(target:String):
+	now_play_anim = target
+	animationPlayer.play(target)
 	pass
 		
 func move():
@@ -347,18 +317,20 @@ func now_hitAttack():
 			attack1State:
 				attackSE.pitch_scale = 1.1
 				attackSE.play()
-				stats.ex_point += 2
+				stats._ex_point += 50
 			attack2State:
 				attackSE.pitch_scale = 1.1
 				attackSE.play()
-				stats.ex_point += 2
+				stats._ex_point += 2
 			attack3State:
 				attackSE.pitch_scale = 1.2
 				attackSE.play()
-				stats.ex_point += 2
+				stats._ex_point += 2
 			duelState:
 				duel_attackSE.play()
-				stats.ex_point += 20
+				stats._ex_point += 20
+			exAttackState:
+				pass
 			
 
 func hit_SE_stop():
@@ -366,7 +338,7 @@ func hit_SE_stop():
 
 #statsのpowを参照して、攻撃モーションごとにdamageの値を更新する関数
 func change_attackPow(magnification : int):
-	stats.power = magnification
+	stats._power = magnification
 #	swordHitbox.change_Damage(magnification * stats.power)
 	pass
 	
@@ -385,7 +357,7 @@ func attackVectorCreate():
 #			correction_knockback_vector.y = attack_vector.y / sqrt(pow(attack_vector.y, 2) + pow(attack_vector.y, 2))
 		
 #		swordHitbox.knockback_vector = correction_knockback_vector
-		knockback_vector = correction_knockback_vector
+		stats.knockback_vector = correction_knockback_vector
 	else:
 		attack_vector = initial_attack_vector
 
@@ -405,31 +377,6 @@ func chase_enmey_move(delta):
 	velocity = move_and_slide(velocity)
 #	return attack_direction
 
-func attack_state(delta, attackType):
-#	chase_enmey_move(delta)
-#
-#	match attackType:
-#		player_state.ATTACK1:
-#			swordHitbox.change_Knockback_Pow(knockback_pow)
-#			animationState.travel("Attack1")
-#			animationTree.set("parameters/Attack1/blend_position", attack_vector)
-#		player_state.ATTACK2:
-#			swordHitbox.change_Knockback_Pow(knockback_pow)
-#			animationState.travel("Attack2")
-#			animationTree.set("parameters/Attack2/blend_position", attack_vector)
-#		player_state.ATTACK3:
-#			swordHitbox.change_Knockback_Pow(knockback_pow * 3)
-#			animationState.travel("Attack3")
-#			animationTree.set("parameters/Attack3/blend_position", attack_vector)
-#	if Input.is_action_just_pressed("attack") && canNextCombo:
-##		match state:
-##			player_state.ATTACK1:
-##				state = player_state.ATTACK2
-##			player_state.ATTACK2:
-##				state = player_state.ATTACK3
-#		canNextCombo = false
-	pass
-
 func nextAttackTiming():
 	canNextCombo = true
 
@@ -438,30 +385,22 @@ func attack_animation_finished():
 	canNextCombo = false
 	#攻撃時に向いた方向にアニメーション終了時に向くように修正
 	if roll_vector.x > 0:
-		animationPlayer.play("IdleRight")
+		play_anim("R_Idle")
+		is_look_right = true
 	else :
-		animationPlayer.play("IdleLeft")
+		play_anim("L_Idle")
+		is_look_right = false
 #	animationTree.set("parameters/Idle/blend_position", attack_vector)
 	
 	stateMatchine.ChangeState(moveState)
 	
-func roll_state(delta):
-	velocity = roll_vector * ROLL_SPEED
-#	animationState.travel("Roll")
-	#Roll中に敵との当たり判定を一定時間消す処理
-	k_body.set_collision_mask_bit(4, false)
-#	k_body.set_collision_layer_bit(6, false)
-	
-	hurtbox.monitoring = false
-	move()
-	
 func roll_aimation_finished():
 	velocity /= 2
 	#敵との当たり判定を復活させる処理
-	k_body.set_collision_mask_bit(4, true)
+#	k_body.set_collision_mask_bit(4, true)
 #	k_body.set_collision_layer_bit(6, true)
 	
-	hurtbox.monitoring = true
+#	hurtbox.monitoring = true
 	stateMatchine.ChangeState(moveState)
 #	state = player_state.MOVE
 
@@ -474,8 +413,14 @@ func damage_animation_finished():
 
 #無敵時間終了時の処理
 func _on_InvincibleTime_timeout():
-	hurtboxCollision.set_deferred("disabled", false)
+#	hurtboxCollision.set_deferred("disabled", false)
 	pass # Replace with function body.
+
+#ex_attackを開始した時に起動する関数
+func start_ex_attack(client, pos):
+	ex_attack_scene.global_position = pos
+	ex_attack_scene._start_ex_attack(client, stats)
+	stateMatchine.ChangeState(exAttackState)
 
 #duelSystem中に行動をしたら、他の行動が行えないようにする関数
 func duel_action_start():
@@ -491,9 +436,10 @@ func duelCounter_animation_finished():
 func duelRoll_animation_finished():
 #	print("finish duel Roll")
 	now_duelAction = false
-	k_body.set_collision_mask_bit(4, true)
+#	k_body.set_collision_mask_bit(4, true)
 	hurtbox.monitoring = true
-	animationPlayer.play("IdleRight")
+	play_anim("R_Idle")
+	
 	print(now_duelAction)
 
 func move_duelStage(pos):
@@ -503,12 +449,14 @@ func move_duelStage(pos):
 	
 	animationPlayer.stop()
 	
-	jump()
+#	jump()
 	
 	if is_look_right:
-		animationPlayer.play("R_moveDuel")
+		play_anim("R_moveDuel")
 	else:
-		animationPlayer.play("L_moveDuel")
+		play_anim("L_moveDuel")
+	
+#	pos = (pos[0], (pos[1] - 5))
 	
 	tween.interpolate_property(self, "position", position, pos, 1.0, Tween.TRANS_EXPO, Tween.EASE_OUT)
 	tween.interpolate_callback(self, 1.0, "move_duelStage_complete")
@@ -530,15 +478,20 @@ func move_duelStage_complete():
 #	animationState.travel("Idle")
 #	print("move completed")
 
-	animationPlayer.play("IdleRight")
+	play_anim("R_Idle")
 	stateMatchine.ChangeState(duelState)
 	pass
 
 func _on_HurtBox_area_entered(area):
 #	stats.health -= area.damage
-	stats.health -= area.get_owner().stats.power
+	stats._health -= area.get_owner().stats._power
 	hurtbox.start_invincibility(0.5)#無敵時間の設定
-	hurtbox.create_hit_effect(global_position)#ヒット時の演出の作成
+	hurtbox.create_hit_effect(global_position, area.get_owner().stats.target_effect)#ヒット時の演出の作成
+	
+	if !(area.get_owner().stats._float_pow == 0):
+		stats._hurt_float_pow = area.get_owner().stats._float_pow
+		_jump_process.jump()
+		
 	
 	#ダメージアニメーションを移行するstate
 	stateMatchine.ChangeState(damageState)
@@ -547,7 +500,7 @@ func _on_HurtBox_area_entered(area):
 #	knockback = area.knockback_vector * area.knockback_pow
 #	print("vector :" + str(area.get_owner().knockback_vector))
 #	print("pow :" + str(area.get_owner().knockback_pow))
-	knockback = area.get_owner().knockback_vector * area.get_owner().knockback_pow
+	knockback = area.get_owner().stats.knockback_vector * area.get_owner().stats.knockback_pow
 
 	if now_duelSystem:
 #		get_parent().end_duelSystem()
@@ -586,24 +539,24 @@ class PlayerIdleState extends StateTemp:
 			if m_Owner.input_vector != Vector2.ZERO:
 				m_Owner.roll_vector = m_Owner.input_vector
 				
-				m_Owner.knockback_vector = m_Owner.input_vector
+				m_Owner.stats.knockback_vector = m_Owner.input_vector
 	#			m_Owner.animationTree.set("parameters/Idle/blend_position", m_Owner.input_vector)
 	#			m_Owner.animationTree.set("parameters/Run/blend_position", m_Owner.input_vector)
 	#			m_Owner.animationState.travel("Run")
 				if !m_Owner.now_duelSystem : 
 					if m_Owner.roll_vector.x == 0:
 						if m_Owner.is_look_right:
-							m_Owner.animationPlayer.play("RunRight")
+							m_Owner.play_anim("R_Run")
 							m_Owner.is_look_right = true
 						else :
-							m_Owner.animationPlayer.play("RunLeft")
+							m_Owner.play_anim("L_Run")
 							m_Owner.is_look_right = false
 					else :
 						if m_Owner.roll_vector.x > 0:
-							m_Owner.animationPlayer.play("RunRight")
+							m_Owner.play_anim("R_Run")
 							m_Owner.is_look_right = true
 						else : 
-							m_Owner.animationPlayer.play("RunLeft")
+							m_Owner.play_anim("L_Run")
 							m_Owner.is_look_right = false
 					
 				m_Owner.velocity = m_Owner.velocity.move_toward(m_Owner.input_vector * m_Owner.MAX_SPEED, m_Owner.ACCELERATION)
@@ -614,9 +567,9 @@ class PlayerIdleState extends StateTemp:
 				
 				if !m_Owner.now_duelSystem : 
 					if m_Owner.is_look_right:
-						m_Owner.animationPlayer.play("IdleRight")
+						m_Owner.play_anim("R_Idle")
 					else : 
-						m_Owner.animationPlayer.play("IdleLeft")
+						m_Owner.play_anim("L_Idle")
 
 				m_Owner.velocity = m_Owner.velocity.move_toward(Vector2.ZERO, m_Owner.FRICTION)
 				
@@ -628,18 +581,21 @@ class PlayerIdleState extends StateTemp:
 				m_Owner.stateMatchine.ChangeState(m_Owner.rollState)
 				
 			if Input.is_action_just_pressed("jump"):
-	#			m_Owner.is_floot = false
-				m_Owner.icon.global_position.y = m_Owner.global_position.y
-	#			m_Owner.jump()
+				print("jump")
+				if m_Owner.stats._ex_point >= 100:
+					m_Owner.get_parent().start_EXAttack("hoge")
+					print("do ex attack!!!!")
+#				exAttackState
+#				m_Owner._jump_process.jump()
 				pass
 				
 			if Input.is_action_just_pressed("action"):
-				print(m_Owner.target_enemy.will_attack_class)
-				if m_Owner.stats.ex_point > 99:
-					m_Owner.stateMatchine.ChangeState(m_Owner.exAttackState)
-					pass
-				else:
-					m_Owner.get_parent().start_duelSystem(m_Owner.target_enemy)
+#				print(m_Owner.target_enemy.will_attack_class)
+#				if m_Owner.stats.ex_point > 99:
+#					m_Owner.stateMatchine.ChangeState(m_Owner.exAttackState)
+#					pass
+#				else:
+				m_Owner.get_parent().start_duelSystem(m_Owner.target_enemy)
 	#			m_Owner.stateMatchine.ChangeState(m_Owner.actionState)
 	#			m_Owner.camera.current = false
 				pass
@@ -651,19 +607,19 @@ class PlayerAttack1State extends StateTemp:
 	func _enter(m_Owner):
 		print("state : attack1")
 		m_Owner.attackVectorCreate()
-		m_Owner.knockback_pow = 60
-		m_Owner.change_attackPow(1)
-		
+		m_Owner.stats.knockback_pow = 60
+		m_Owner.change_attackPow(m_Owner.stats._power)
+		m_Owner.stats._float_pow = 0
 #		m_Owner.swordHitbox.change_Knockback_Pow(m_Owner.knockback_pow)
 		
 #		m_Owner.animationTree.set("parameters/Attack1/blend_position", m_Owner.attack_vector)
 #		m_Owner.animationState.travel("Attack1")
 
 		if m_Owner.attack_vector.x > 0:
-			m_Owner.animationPlayer.play("Rattack1")
+			m_Owner.play_anim("Rattack1")
 			m_Owner.is_look_right = true
 		else : 
-			m_Owner.animationPlayer.play("Lattack1")
+			m_Owner.play_anim("Lattack1")
 			m_Owner.is_look_right = false
 		
 	func _execute(m_Owner):
@@ -672,6 +628,10 @@ class PlayerAttack1State extends StateTemp:
 		if Input.is_action_just_pressed("attack") && m_Owner.canNextCombo:
 			m_Owner.stateMatchine.ChangeState(m_Owner.attack2State)
 			pass
+		
+		if Input.is_action_just_pressed("roll") && m_Owner.canNextCombo:
+			m_Owner.stateMatchine.ChangeState(m_Owner.rollState)
+		
 	
 	func _exit(m_Owner):
 		m_Owner.canNextCombo = false
@@ -683,18 +643,19 @@ class PlayerAttack2State extends StateTemp:
 	func _enter(m_Owner):
 		print("state : attack2")
 		m_Owner.attackVectorCreate()
-		m_Owner.knockback_pow = 60
-		m_Owner.change_attackPow(1)
+		m_Owner.stats.knockback_pow = 60
+		m_Owner.change_attackPow(m_Owner.stats._power)
+		m_Owner.stats._float_pow = 0
 #		m_Owner.swordHitbox.change_Knockback_Pow(m_Owner.knockback_pow)
 		
 #		m_Owner.animationTree.set("parameters/Attack2/blend_position", m_Owner.attack_vector)
 #		m_Owner.animationState.travel("Attack2")
 
 		if m_Owner.attack_vector.x > 0:
-			m_Owner.animationPlayer.play("Rattack2")
+			m_Owner.play_anim("Rattack2")
 			m_Owner.is_look_right = true
 		else : 
-			m_Owner.animationPlayer.play("Lattack2")
+			m_Owner.play_anim("Lattack2")
 			m_Owner.is_look_right = false
 	
 	func _execute(m_Owner):
@@ -702,10 +663,13 @@ class PlayerAttack2State extends StateTemp:
 		
 		if Input.is_action_just_pressed("attack") && m_Owner.canNextCombo:
 			m_Owner.stateMatchine.ChangeState(m_Owner.attack3State)
-			pass
+
+		if Input.is_action_just_pressed("roll") && m_Owner.canNextCombo:
+			m_Owner.stateMatchine.ChangeState(m_Owner.rollState)
 	
 	func _exit(m_Owner):
 		m_Owner.swordHitbox_collision.disabled = true
+		m_Owner.canNextCombo = false
 		pass
 	pass
 
@@ -713,18 +677,20 @@ class PlayerAttack3State extends StateTemp:
 	func _enter(m_Owner):
 		print("state : attack3")
 		m_Owner.attackVectorCreate()
-		m_Owner.knockback_pow = 250
-		m_Owner.change_attackPow(3)
+		m_Owner.stats.knockback_pow = 250
+		var power = m_Owner.stats._power
+		m_Owner.change_attackPow(power)
+		m_Owner.stats._float_pow = 1
 #		m_Owner.swordHitbox.change_Knockback_Pow(m_Owner.knockback_pow)
 		
 #		m_Owner.animationTree.set("parameters/Attack3/blend_position", m_Owner.attack_vector)
 #		m_Owner.animationState.travel("Attack3")
 
 		if m_Owner.attack_vector.x > 0:
-			m_Owner.animationPlayer.play("Rattack3")
+			m_Owner.play_anim("Rattack3")
 			m_Owner.is_look_right = true
 		else : 
-			m_Owner.animationPlayer.play("Lattack3")
+			m_Owner.play_anim("Lattack3")
 			m_Owner.is_look_right = false
 		
 	func _execute(m_Owner):
@@ -733,39 +699,22 @@ class PlayerAttack3State extends StateTemp:
 		
 	func _exit(m_Owner):
 		m_Owner.swordHitbox_collision.disabled = true
-		pass
-
-class PlayerEXAttackState extends StateTemp:
-	func _enter(m_Owner):
-		print("state : attack3")
-		m_Owner.attackVectorCreate()
-		m_Owner.knockback_pow = 250
-		m_Owner.change_attackPow(6)
-#		m_Owner.swordHitbox.change_Knockback_Pow(m_Owner.knockback_pow)
-		
-#		m_Owner.animationTree.set("parameters/Attack3/blend_position", m_Owner.attack_vector)
-#		m_Owner.animationState.travel("Attack3")
-		m_Owner.animationPlayer.play("R_EXattack")
-		
-	func _execute(m_Owner):
-		pass
-		
-	func _exit(m_Owner):
-		m_Owner.swordHitbox_collision.disabled = true
+		m_Owner.canNextCombo = false
 		pass
 
 class PlayerRollState extends StateTemp :
 	func _enter(m_Owner):
 		print("state : roll")
 		
+		m_Owner.k_body.set_collision_mask_bit(4, false)
 #		m_Owner.animationTree.set("parameters/Roll/blend_position", m_Owner.roll_vector)
 #		m_Owner.animationState.travel("Roll")
 
 		if m_Owner.roll_vector.x > 0:
-			m_Owner.animationPlayer.play("RollRight")
+			m_Owner.play_anim("R_Roll")
 			m_Owner.is_look_right = true
 		else : 
-			m_Owner.animationPlayer.play("RollLeft")
+			m_Owner.play_anim("L_Roll")
 			m_Owner.is_look_right = false
 		pass
 		
@@ -773,14 +722,16 @@ class PlayerRollState extends StateTemp :
 		m_Owner.velocity = m_Owner.roll_vector * m_Owner.ROLL_SPEED
 		
 		#Roll中に敵との当たり判定を一定時間消す処理
-		m_Owner.k_body.set_collision_mask_bit(4, false)
+
 	#	k_body.set_collision_layer_bit(6, false)
-		m_Owner.hurtbox.monitoring = false
+#		m_Owner.hurtbox.monitoring = false
 		
 		m_Owner.velocity = m_Owner.move_and_slide(m_Owner.velocity)
 		pass
 
 	func _exit(m_Owner):
+		m_Owner.hurtboxCollision.set_deferred("disabled", false)
+		m_Owner.k_body.set_collision_mask_bit(4, true)
 		pass
 		
 	pass
@@ -789,8 +740,10 @@ class PlayerDuelState extends StateTemp:
 	func _enter(m_Owner):
 		m_Owner.now_duelSystem = true
 		print("duel state")
-		m_Owner.knockback_pow = 250
-		m_Owner.change_attackPow(5)
+		m_Owner.stats.knockback_pow = 250
+		var power = m_Owner.stats._power
+		m_Owner.change_attackPow(power)
+		m_Owner.stats._float_pow = 3
 #		m_Owner.swordHitbox.change_Knockback_Pow(m_Owner.knockback_pow)
 #		m_Owner.animationTree.active = false
 		pass
@@ -798,7 +751,7 @@ class PlayerDuelState extends StateTemp:
 	func _execute(m_Owner):
 		
 		if Input.is_action_just_pressed("attack") && !m_Owner.now_duelAction:
-			m_Owner.animationPlayer.play("DuelCounter")
+			m_Owner.play_anim("DuelCounter")
 #		if Input.is_action_just_pressed("roll") && !m_Owner.now_duelAction:
 #			m_Owner.animationPlayer.play("DuelRoll")
 		pass
@@ -824,14 +777,14 @@ class PlayerDamageState extends StateTemp :
 
 		m_Owner.animationPlayer.stop(false)
 		if m_Owner.is_look_right:
-			m_Owner.animationPlayer.play("R_damage")
+			m_Owner.play_anim("R_damage")
 			m_Owner.is_look_right = true
 		else : 
-			m_Owner.animationPlayer.play("L_damage")
+			m_Owner.play_anim("L_damage")
 			m_Owner.is_look_right = false
 		pass
 
-		m_Owner.hurtboxCollision.set_deferred("disabled", true)
+#		m_Owner.hurtboxCollision.set_deferred("disabled", true)
 		m_Owner.invincibleTimer.start(0.2)
 		pass
 		
@@ -843,3 +796,27 @@ class PlayerDamageState extends StateTemp :
 		pass
 		
 	pass
+
+class PlayerEXAttackState extends StateTemp:
+	func _enter(m_Owner):
+		print("state : duelSray")
+#		m_Owner.hurtboxCollision.set_disabled(true)
+#		m_Owner.hurtboxCollision.set_deferred("disabled", true)
+#		m_Owner.softCollision_col.set_deferred("disabled", true)
+		m_Owner.stats._ex_point = 0
+		m_Owner.attackVectorCreate()
+		m_Owner.velocity = Vector2.ZERO
+		m_Owner.animationPlayer.stop(false)
+		m_Owner.stats.knockback_pow = 250
+		var power = m_Owner.stats._power
+		m_Owner.change_attackPow(power * 3)
+		m_Owner.stats._float_pow = 2
+	
+	func _execute(m_Owner):
+		m_Owner.velocity = Vector2.ZERO
+		pass
+	
+	func _exit(m_Owner):
+#		m_Owner.hurtboxCollision.set_disabled(false)
+		m_Owner.play_anim(m_Owner.now_play_anim)
+		pass	

@@ -26,22 +26,40 @@ var stepHightTile
 
 onready var map_rect
 
+
+
 func _ready():
 	lowLight.visible = false
 	
 	#WorldManagerのstepHightTileを取得する
 	stepHightTile = get_parent().get_parent().find_node("stepHightTile")
 	
-	player_camera.limit_left = stepHightTile.get_used_rect().position.x * stepHightTile.cell_size.x
-	player_camera.limit_right = stepHightTile.get_used_rect().end.x * stepHightTile.cell_size.x
-	player_camera.limit_bottom = stepHightTile.get_used_rect().end.y * stepHightTile.cell_size.y
-	player_camera.limit_top = stepHightTile.get_used_rect().position.y * stepHightTile.cell_size.y
+	var map_limits = stepHightTile.get_used_rect()
+	print("map_limits", map_limits)
+	var map_cell_size = stepHightTile.cell_size
+	print("map_cell_size", map_cell_size)
+	print("position start : " + str(stepHightTile.get_used_rect().position.x * stepHightTile.cell_size.x))
+	print(stepHightTile.get_used_rect().position.x * stepHightTile.cell_size.x + stepHightTile.position.x)
+	print("position end   : " + str(stepHightTile.get_used_rect().end.x * stepHightTile.cell_size.x))
+	print(stepHightTile.get_used_rect().end.x * stepHightTile.cell_size.x + stepHightTile.position.x)
+
+	player_camera.limit_left = stepHightTile.get_used_rect().position.x * stepHightTile.cell_size.x + stepHightTile.position.x
+	player_camera.limit_right = stepHightTile.get_used_rect().end.x * stepHightTile.cell_size.x + stepHightTile.position.x
+	player_camera.limit_bottom = stepHightTile.get_used_rect().end.y * stepHightTile.cell_size.y + stepHightTile.position.y
+	player_camera.limit_top = stepHightTile.get_used_rect().position.y * stepHightTile.cell_size.y + stepHightTile.position.y
+	
+#	player_camera.limit_left = -10000000
+#	player_camera.limit_right = 10000000
+#	player_camera.limit_bottom = 10000000
+#	player_camera.limit_top = -10000000
+	
+	
 	player_camera.limit_smoothed = true
 	
 
 #初期化設定
 func setting():
-	
+#	ex_anim
 	player.setting()
 	pass
 
@@ -96,7 +114,7 @@ func get_ClosestTarget_fromPlayer():
 		
 	else:
 		targetChara = null
-		print("too long!")
+#		print("too long!")
 
 
 func death_targetEnemy():
@@ -111,11 +129,39 @@ func target_reset():
 			if targetStats != null && targetStats.myType == Stats.CharaType.ENEMY:
 				targetChara.set_targeting(false)
 
+func start_EXAttack(value:String):
+	#valueで使用する技を選択する
+	for targetChara in get_children():
+		var have_Stats = null
+		if targetChara.get_child_count() > 0:
+			have_Stats = targetChara.find_node("Stats")
+		if have_Stats != null:
+			match have_Stats.myType:
+				GameStats.CharaType.ENEMY:
+					targetChara.ex_attack_start()
+				GameStats.CharaType.PLAYER:
+					targetChara.start_ex_attack(self, player_camera.get_camera_position())
+	
+	print("hogehoge")
+
+func end_EXAttack():
+	for targetChara in get_children():
+		var have_Stats = null
+		if targetChara.get_child_count() > 0:
+			have_Stats = targetChara.find_node("Stats")
+		if have_Stats != null:
+			match have_Stats.myType:
+				GameStats.CharaType.ENEMY:
+					targetChara.ex_attack_end()
+				GameStats.CharaType.PLAYER:
+					targetChara.stateMatchine.ChangeState(player.moveState)
+	
+
 func start_duelSystem(targetEnemy):
 #	print(targetEnemy)
 #	print(targetEnemy == player.target_enemy)
 	
-	if targetEnemy.can_duelFlag:
+	if targetEnemy != null && targetEnemy.can_duelFlag:
 		player_camera.current = false
 		
 		duel_target = targetEnemy
@@ -124,14 +170,18 @@ func start_duelSystem(targetEnemy):
 		player_duelPos_save = player_duelPos.global_position
 		enemy_duelPos_save = enemy_duelPos.global_position
 		
-		player.move_duelStage(player_duelPos.global_position)
+		player.move_duelStage(player_duelPos.global_position - self.global_position)
 		player.z_index = lowLight.z_index + 1
 		
-		targetEnemy.move_duelStage(enemy_duelPos.global_position)
+		targetEnemy.move_duelStage(enemy_duelPos.global_position - self.global_position)
 		targetEnemy.z_index = lowLight.z_index + 1
 		
 		for targetChara in get_children():
-			if targetChara != player && targetChara != lowLight && targetChara != duelSystem:
+			var have_Stats = null
+			if targetChara.get_child_count() > 0:
+				have_Stats = targetChara.find_node("Stats")
+			if targetChara != player && have_Stats != null:
+#			if targetChara != player && targetChara != lowLight && targetChara != duelSystem:
 #				print(targetChara.will_attack_class)
 				
 				#duelシステム起動時に対象でないキャラクターはfalse、対象のキャラクターはtrueで関数を実行
@@ -161,7 +211,7 @@ func end_duelSystem():
 		elif targetChara == lowLight:
 #			print("end duel lowLight")
 			lowLight.visible = false
-		elif targetChara != duelSystem:
+		elif targetChara != duelSystem && targetChara.find_node("Stats") != null:
 #			print("end duel enemy")
 			targetChara.end_DuelAttack()
 	pass
@@ -183,4 +233,8 @@ func duelEnd_frameFreeze(timeScale, duration):
 
 func _process(delta):
 	duelSystem.global_position = player_camera.get_camera_position()
-	pass
+
+	if Input.is_action_just_pressed("jump"):
+#		self.paused = true
+		self.pause_mode = Node.PAUSE_MODE_STOP
+		pass
